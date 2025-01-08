@@ -1,3 +1,4 @@
+
 import os
 import subprocess
 import shutil
@@ -19,10 +20,14 @@ def obfuscate_folder(folder_path, dist_folder_name):
                 os.makedirs(os.path.dirname(dist_file_path), exist_ok=True)
 
                 try:
-                    subprocess.run(["pyarmor", "gen", file_path, "-O", dist_file_path], check=True)
+                    subprocess.run(["pyarmor", "gen", file_path], check=True)
+
                     print(f"Obfuscated: {file_path}")
                 except subprocess.CalledProcessError as e:
                     print(f"Error obfuscating {file_path}: {e}")
+                    
+    subprocess.run(["rm", "-r", f"{folder_path}/dist"], check=True)
+    subprocess.run(["mv", "dist/", f"{folder_path}/"], check=True)
 
 def create_init_file(folder_path, dist_folder_name):
     """

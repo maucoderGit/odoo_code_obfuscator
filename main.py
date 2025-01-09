@@ -1,5 +1,5 @@
-
 import os
+import re
 import subprocess
 import shutil
 
@@ -52,6 +52,48 @@ def create_init_file(folder_path, dist_folder_name):
     
         f.write(values)
         f.close()
+
+    files = [file for file in os.listdir(f"{folder_path}/dist") if file != "__init__.py" and file.endswith(".py")]
+    for file in files:
+        file_path = os.path.join(f"{folder_path}/dist", file)
+        # Apply your desired logic to each file here
+        print(f"Processing file: {file_path}") 
+        # Example: Modify the PyArmor import statement
+        fix_pyarmor_import(file_path) 
+
+def fix_pyarmor_import(file_path):
+    """
+    Modifies the PyArmor import statement in the specified file.
+
+    Args:
+        file_path: Path to the Python file.
+    """
+
+    try:
+        with open(file_path, 'r') as f:
+            content = f.read()
+
+            # Find the original import line
+            match = re.search(r'^from pyarmor_runtime_\w{6} import __pyarmor__', content, re.MULTILINE)
+            print(content)
+            print(match)
+
+            if match:
+                # Replace the line with the modified version
+                new_line = f"from .{match.group(0).split(' ')[1]} import __pyarmor__"
+                content = content.replace(match.group(0), new_line)
+
+                # Write the modified content back to the file
+                with open(file_path, 'w') as f:
+                    f.write(content)
+
+                print(f"Import statement in {file_path} modified successfully.")
+
+            else:
+                print(f"Import statement not found in {file_path}.")
+
+    except Exception as e:
+        print(f"An error occurred while processing {file_path}: {e}")
 
 def run():
     """

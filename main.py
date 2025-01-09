@@ -1,7 +1,32 @@
+
 import os
 import re
 import subprocess
 import shutil
+
+EXECUTE_IN_ALL_FOLDERS: bool = False
+REMOVE_ORIGINAL_MODELS: bool = True
+DEFAULT_FOLDER: str = os.getcwd()
+
+def execute_python_code_in_directories(script) -> None:
+    """
+    Executes a Python script in all subdirectories of the given root directory.
+
+    Args:
+        root_dir: The root directory to start the search from.
+        script_name: The name of the Python script to execute.
+    """
+    def conditional_call():
+        if not EXECUTE_IN_ALL_FOLDERS:
+            script()
+            return
+
+        for dirpath, dirnames, filenames in os.walk(DEFAULT_FOLDER):
+            print(dirpath)
+            os.chdir(dirpath)
+            script()
+    
+    return conditional_call
 
 def obfuscate_folder(folder_path, dist_folder_name):
     """
@@ -25,6 +50,15 @@ def obfuscate_folder(folder_path, dist_folder_name):
                     print(f"Obfuscated: {file_path}")
                 except subprocess.CalledProcessError as e:
                     print(f"Error obfuscating {file_path}: {e}")
+    
+    if REMOVE_ORIGINAL_MODELS:
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+
+            print(file_path)
+            if os.path.isfile(file_path) and filename != "__init__.py":
+                os.remove(file_path)
+                print(f"Removed file: {file_path}")
                     
     subprocess.run(["rm", "-r", f"{folder_path}/dist"], check=True)
     subprocess.run(["mv", "dist/", f"{folder_path}/"], check=True)
@@ -75,8 +109,6 @@ def fix_pyarmor_import(file_path):
 
             # Find the original import line
             match = re.search(r'^from pyarmor_runtime_\w{6} import __pyarmor__', content, re.MULTILINE)
-            print(content)
-            print(match)
 
             if match:
                 # Replace the line with the modified version
@@ -95,6 +127,7 @@ def fix_pyarmor_import(file_path):
     except Exception as e:
         print(f"An error occurred while processing {file_path}: {e}")
 
+@execute_python_code_in_directories
 def run():
     """
     Main function to execute the obfuscation process.
